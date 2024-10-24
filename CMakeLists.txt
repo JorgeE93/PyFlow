@@ -1,32 +1,60 @@
-# CMakeLists.txt
-cmake_minimum_required(VERSION 3.14)
-project(PyFlow)
+name: Build and Test PyFlow
 
-# Find pybind11
-find_package(pybind11 REQUIRED)
+on:
+  push:
+    branches: [main]
+  pull_request:
 
-# Include directories
-include_directories(include)
+jobs:
+  build-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        exclude:
+          - os: macos-latest
+            python-version: "3.7"
+    steps:
+      - uses: actions/checkout@v3
 
-# Add the library target
-add_library(pyflow SHARED
-    src/Event.cpp
-    src/EventManager.cpp
-    src/Callback.cpp
-    src/State.cpp
-    src/CompositeState.cpp
-    src/StateMachine.cpp
-    src/Events.cpp
-    bindings/bindings.cpp
-)
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
 
-# Set the C++ standard
-set_target_properties(pyflow PROPERTIES
-    CXX_STANDARD 14
-    CXX_STANDARD_REQUIRED YES
-    CXX_EXTENSIONS NO
-)
+      - name: Install build tools on Ubuntu
+        if: runner.os == 'Linux'
+        run: sudo apt-get install build-essential
 
-# Link pybind11
-target_link_libraries(pyflow PRIVATE pybind11::module)
+      - name: Install build tools on Windows
+        if: runner.os == 'Windows'
+        run: |
+          choco install visualstudio2019buildtools
+          choco install cmake
+
+      - name: Install build tools on macOS
+        if: runner.os == 'macOS'
+        run: |
+          xcode-select --install || true
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install pybind11 pytest
+
+      - name: Build wheel
+        run: python setup.py bdist_wheel
+
+      - name: List wheel files
+        run: ls dist/
+
+      - name: Install package
+        run: pip install dist/*.whl
+
+      - name: Run tests
+        run: |
+          cd tests/python
+          pytest
 
