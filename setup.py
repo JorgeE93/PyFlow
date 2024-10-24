@@ -2,7 +2,10 @@
 from setuptools import setup
 from pybind11.setup_helpers import Pybind11Extension, build_ext
 import sys
-import os
+
+extra_compile_args = []
+if sys.platform == "win32":
+    extra_compile_args.append("/EHsc")  # Enable exception handling in MSVC
 
 ext_modules = [
     Pybind11Extension(
@@ -22,14 +25,15 @@ ext_modules = [
         ],
         language="c++",
         cxx_std=14,
+        extra_compile_args=extra_compile_args,
     ),
 ]
 
 setup(
     name="PyFlow",
     version="1.0.0",
-    author="Jorge Enriquez",
-    author_email="enriquez.j317@gmail.com",
+    author="Your Name",
+    author_email="your.email@example.com",
     description="An event system with type-erased polymorphic callbacks and hierarchical state machines",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
