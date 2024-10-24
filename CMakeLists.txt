@@ -15,6 +15,7 @@ add_library(pyflow SHARED
     src/Callback.cpp
     src/State.cpp
     src/CompositeState.cpp
+    src/StateMachine.cpp
     src/Events.cpp
     bindings/bindings.cpp
 )
